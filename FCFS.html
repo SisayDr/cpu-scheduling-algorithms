@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CFG Simulator</title>
+    <style>
+        body{display: flex;align-items: center; justify-items: center;font-family: monospace; font-size: 1.1rem;background: rgb(76, 76, 76);min-height: 90vh;}
+        #container{max-width: 1240px; width: 80%;margin: auto;padding: 2rem;border-radius: 1%;background: white}
+
+        .ds-f{display: flex;gap: 2rem; flex-wrap: wrap;align-items:flex-start; justify-content: space-around;}/*  margin: 1rem;margin: 2rem;} */
+        .jsc-spa{justify-content: space-around}
+        table{min-width: 20%;border-collapse: collapse;}
+        tr, td, th{border: 1px solid #333;padding: 1rem;font-family: monospace;}
+        #results-table{width: 90%; margin: auto;}
+        p#result{padding: .5rem; text-align: center;}
+        
+        .ds-f label{text-align: right;width: 20%}
+
+        #title{text-align: center;margin: 3rem;font-family: cursive;color: rgb(62, 118, 223);}
+        input{padding: .5rem;}
+        #container{max-width: 1240px; width: 80%;min-height: 70vh;margin: auto;padding: 2rem;border-radius: 1%;background: white}
+        table{text-align: center;color: rgb(247, 87, 23);font-weight: bold;}
+        td, tr{border: none;}
+        button{padding: 1rem 2rem; min-width: 15%;border: none; outline: none;font-weight: bold;border-radius: 1rem;color: tomato;font-size: 1.1rem;font-family: monospace;cursor: pointer;}
+
+        #gant-chart-id td{border: 1px solid;text-align: center;}
+        #gant-chart-time td{text-align: right;padding: 0;}
+        #gant-chart-time td:first-child{text-align: left;}
+        td.shaded{background-image: linear-gradient(to left, #434343 0%, black 100%);}
+
+    </style>
+</head>
+<body>
+<div id="container">
+    <p align="right"><a href="./Round-Robin11.html">Round-Robin</a></p>
+    <h1 id="title">First Come First Served CPU Scheduling</h1>
+    <div class="ds-f">
+        <form onsubmit="return add_process()">
+            <table>
+                <tr>
+                    <td><label for="process-id-input" >Process ID </label></td>
+                    <td><input type="number" id="process-id-input" placeholder="P" min="0" required></td>
+                    
+                </tr>
+                <tr>
+                    <td><label for="arrival-time-input" >Arrival Time </label></td>
+                    <td><input type="number" id="arrival-time-input" value="0" min="0" required></td>
+                </tr>
+                <tr>
+                    <td><label for="burst-time-input" >Burst Time </label></td>
+                    <td><input type="number" id="burst-time-input" min="0" required></td>
+                </tr>
+                <tr>
+                    <td colspan="2"><button type="submit">ADD Process</button></td>
+                </tr>
+            </table>
+        </form>
+        <div>
+            <table id="processes-table">
+                <tr>
+                    <th>PID</th>
+                    <th>AT</th>
+                    <th>BT</th>
+                </tr>
+            </table>
+            <br><br>
+            <tr>
+                <td colspan="2"><button type="submit" onclick="draw_gant_chart()">Draw Gant Chart</button></td>
+                <td colspan="2"><button type="submit" onclick="window.location.reload();">Clear Input</button></td>
+                <td colspan="2"><button type="submit" onclick="insert_processes()">Test Input</button></td>
+            </tr>
+        </div>
+    </div>
+    <div style="text-align: center;">
+        <br><br>
+        <table style="margin: auto;">
+            <tr id="gant-chart-id">
+
+            </tr>
+            <tr id="gant-chart-time">
+
+            </tr>
+        </table>
+    </div>
+    </div>
+<script>
+    var processes = [
+        ['1', '0', '3'],
+        ['2', '5', '2'],
+        ['3', '5', '7'],
+        ['4', '6', '3'],
+        ['5', '8', '5']
+    ];
+    var PID = 0;
+    var AT = 1;
+    var BT = 2;
+
+    var processes_table = document.getElementById("processes-table");
+    var process_id_input = document.getElementById("process-id-input");
+    var arrival_time_input = document.getElementById("arrival-time-input");
+    var burst_time_input = document.getElementById("burst-time-input");
+    var gant_chart_ids = document.getElementById("gant-chart-id");
+    var gant_chart_time = document.getElementById("gant-chart-time");
+   
+
+    function draw_gant_chart(){
+        gant_chart_ids.innerHTML = "";
+        if(processes.length == 0){
+            alert("Please, Enter Processes first!");
+            return false;
+        }
+
+        let time = 0;
+        gant_chart_time.innerHTML = "<td>"+time+"</td>\n";  
+        for(let i=0; i<processes.length; i++){
+            if(time < processes[i][AT]){
+                gant_chart_ids.innerHTML += "<td class=\"shaded\"></td>\n";
+                time = parseInt(processes[i][AT]);
+                gant_chart_time.innerHTML += "<td style=\"width: "+20*(time - parseInt(processes[i][BT]))+"px;\">"+time+"</td>\n";
+                time = parseInt(processes[i][AT]);
+            }
+            gant_chart_ids.innerHTML += "<td>P"+processes[i][PID]+"</td>\n";
+            time += parseInt(processes[i][BT]);
+            gant_chart_time.innerHTML += "<td style=\"width: "+20*parseInt(processes[i][BT])+"px;\">"+time+"</td>\n";
+        }
+        gant_chart_ids.getElementsByTagName("td")[0].setAttribute("colspan", "2");
+        for(let i=0; i<processes.length; i++){
+            time += parseInt(processes[i][BT]);
+        }
+
+        return false;
+
+    }
+    function sort_process(p1, p2){
+        if(p1[AT] == p2[AT]){
+            if(p1[BT] == p2[BT]){
+                if(p1[PID] == p2[PID]){
+                    return 0;
+                }
+                else return (p1[PID] < p2[PID]) ? -1 : 1;
+            }
+            else return (p1[BT] < p2[BT]) ? -1 : 1;
+        }
+        else return (p1[AT] < p2[AT]) ? -1 : 1;
+    }
+    function add_process(){
+        processes.push([process_id_input.value, arrival_time_input.value, burst_time_input.value]);
+
+        processes_table.innerHTML += "<tr>"+
+            "<th>P"+process_id_input.value+"</th>"+
+            "<th>"+arrival_time_input.value+"</th>"+
+            "<th>"+burst_time_input.value+"</th>"+
+        "</tr>";
+
+        process_id_input.value = "";
+        arrival_time_input.value = "0";
+        burst_time_input.value = "";
+        
+        return false;
+
+    } 
+    function insert_processes(){
+        processes_table.innerHTML = "<tr><th>PID</th><th>AT</th><th>BT</th></tr>";
+        processes.forEach(p => {
+        processes_table.innerHTML += "<tr>"+
+                    "<th>P"+p[PID]+"</th>"+
+                    "<th>"+p[AT]+"</th>"+
+                    "<th>"+p[BT]+"</th>"+
+                    
+                "</tr>";
+        });
+    }
+</script>
+</body>
+</html>
